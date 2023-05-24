@@ -2,6 +2,12 @@
 # It is not intended for manual editing.
 
 [[package]]
+name = "colorama"
+version = "0.4.6"
+requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
+summary = "Cross-platform colored terminal text."
+
+[[package]]
 name = "duckdb"
 version = "0.8.0"
 summary = "DuckDB embedded database"
@@ -21,12 +27,25 @@ dependencies = [
     "numpy>=1.16.6",
 ]
 
+[[package]]
+name = "tqdm"
+version = "4.65.0"
+requires_python = ">=3.7"
+summary = "Fast, Extensible Progress Meter"
+dependencies = [
+    "colorama; platform_system == \"Windows\"",
+]
+
 [metadata]
 lock_version = "4.2"
 groups = ["default"]
-content_hash = "sha256:70a7ee590e76578e657dc2ac903f95ac5b90277926f2fbe405be08937d93d7a3"
+content_hash = "sha256:620dd83621ec56cf6b7c13e4ba3ee42f1445e42d9f6a37d477e06e548bba55c4"
 
 [metadata.files]
+"colorama 0.4.6" = [
+    {url = "https://files.pythonhosted.org/packages/d1/d6/3965ed04c63042e047cb6a3e6ed1a63a35087b6a609aa3a15ed8ac56c221/colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
+    {url = "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
+]
 "duckdb 0.8.0" = [
     {url = "https://files.pythonhosted.org/packages/05/1a/fcd502b83dde6110d97322559ab456f9423fd4de697f3b24325d0fffe995/duckdb-0.8.0-cp36-cp36m-win32.whl", hash = "sha256:914896526f7caba86b170f2c4f17f11fd06540325deeb0000cb4fb24ec732966"},
     {url = "https://files.pythonhosted.org/packages/09/13/63d1dc90849c80dc8de2caae4bce126951c1bc692760aa9dfccc718db930/duckdb-0.8.0-cp37-cp37m-musllinux_1_1_x86_64.whl", hash = "sha256:5c6f6b2d8db56936f662c649539df81856b5a8cb769a31f9544edf18af2a11ff"},
@@ -132,4 +151,8 @@ content_hash = "sha256:70a7ee590e76578e657dc2ac903f95ac5b90277926f2fbe405be08937
     {url = "https://files.pythonhosted.org/packages/fb/73/8520fc3168e71d98b0b9a7e276056f1a6ee65047733be1b8dd495d7aca49/pyarrow-12.0.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b99e559d27db36ad3a33868a475f03e3129430fc065accc839ef4daa12c6dab6"},
     {url = "https://files.pythonhosted.org/packages/fe/05/b66d098211abbbca2c453731e6f05bbc75632728778e7c2b0171d6ab43be/pyarrow-12.0.0-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:a7cd32fe77f967fe08228bc100433273020e58dd6caced12627bcc0a7675a513"},
     {url = "https://files.pythonhosted.org/packages/ff/4d/34422782a52590b05e1a032a47d09d3c4469bd98789d83498a587bef9613/pyarrow-12.0.0-cp310-cp310-macosx_10_14_x86_64.whl", hash = "sha256:3b97649c8a9a09e1d8dc76513054f1331bd9ece78ee39365e6bf6bc7503c1e94"},
+]
+"tqdm 4.65.0" = [
+    {url = "https://files.pythonhosted.org/packages/3d/78/81191f56abb7d3d56963337dbdff6aa4f55805c8afd8bad64b0a34199e9b/tqdm-4.65.0.tar.gz", hash = "sha256:1871fb68a86b8fb3b59ca4cdd3dcccbc7e6d613eeed31f4c332531977b89beb5"},
+    {url = "https://files.pythonhosted.org/packages/e6/02/a2cff6306177ae6bc73bc0665065de51dfb3b9db7373e122e2735faf0d97/tqdm-4.65.0-py3-none-any.whl", hash = "sha256:c4f53a17fe37e132815abceec022631be8ffe1b9381c2e6e30aa70edc99e9671"},
 ]

@@ -2,11 +2,19 @@ import duckdb
 import argparse
 import pyarrow as pa
 import pyarrow.parquet as pq
+from tqdm import tqdm
 import os
 import json
 
-def parquet_table_schema_to_json_columns(schema, table_name, rows=0, pk=""):
-   def map_field(field):
+def get_cardinality(parquet, name):
+    query = f"SELECT COUNT(DISTINCT {name}) FROM parquet_scan('{parquet}')"
+    con = duckdb.connect()
+    result = con.execute(query).fetchall()
+    return result[0][0]
+
+def parquet_table_schema_to_json_columns(parquet, schema, rows=0):
+   pks = []
+   def map_field(field, pks):
         field_type = field.type
         nullable = field.nullable
         base = None
@@ -33,21 +41,29 @@ def parquet_table_schema_to_json_columns(schema, table_name, rows=0, pk=""):
             base = 'String'
             props = []
 
+        cardinality = get_cardinality(parquet, field.name)
+        if cardinality == rows:
+            pks.append(field.name)
         return {
             'name': field.name,
             'type': {
                 'base': base,
                 'props': props,
                 'nullable': nullable
-            }
-            #'distinct_values': 0  # This value needs to be calculated from the actual data
+            },
+             'distinct_values': cardinality  # This value needs to be calculated from the actual data
         }
    data = {
-        'columns': [map_field(field) for field in schema],
+        'columns': [map_field(field, pks) for field in schema],
    }
-   result = f"""{{ "{table_name}":"pkey":"{pk}","num_rows":{rows},{json.dumps(data)} 
-    }}"""
-   print(result)    
+
+   result = {
+        "pkey": pks,
+        "num_rows": rows,
+        "columns": data['columns']
+    }
+   
+   return result    
 
 def parquet_schema(file_path):
     # Read the metadata of the Parquet file
@@ -57,15 +73,14 @@ def parquet_schema(file_path):
     schema = metadata.schema
     return (schema.to_arrow_schema(),metadata.num_rows)
 
-def lingofy(input, output):
+def lingofy(input, output=None):
     if output is None:
         output = "lingodb"
-    if os.path.exists(output) and os.path.isdir(output):
-        raise Exception("Output directory already exists.")
-    else:
+    if not (os.path.exists(output) and os.path.isdir(output)):
        os.mkdir(output)
     
-    file_root, _ = os.path.splitext(input)
+    
+    file_root = os.path.basename(input).split(".")[0]
     lingofile = f"{file_root}.arrow"
     dbpath = os.path.join(output, lingofile)
     chunk_size = 1_000
@@ -81,7 +96,49 @@ def lingofy(input, output):
     writer.write_table(result)
     writer.close()
     sink.close()
-        
+
+def get_parquet_files(file_path):
+    if not os.path.exists(file_path):
+        raise FileNotFoundError(f"{file_path} does not exist")
+
+    parquet_files = []
+
+    if os.path.isfile(file_path):
+        try:
+            pq.ParquetFile(file_path)  # Test if it's a valid Parquet file
+            return [os.path.basename(file_path)]
+        except Exception:
+            raise ValueError(f"{file_path} is not a valid Parquet file")
+
+    elif os.path.isdir(file_path):
+        for root, _, files in os.walk(file_path):
+            for file in files:
+                if file.endswith('.parquet'):
+                    file_path = os.path.join(root, file)
+                    try:
+                        pq.ParquetFile(file_path)  # Test if it's a valid Parquet file
+                        parquet_files.append(file_path)
+                    except Exception:
+                        pass
+
+        if not parquet_files:
+            raise ValueError(f"No Parquet files found in the directory: {file_path}")
+
+        return parquet_files
+
+    else:
+        raise ValueError(f"{file_path} is neither a file nor a directory")
+
+def generate_lingo_catalog(parquet_files):
+    catalog = {'tables': {}}
+
+    for file_path in parquet_files:
+        arrow_schema, num_rows = parquet_schema(file_path)
+        table_name = os.path.splitext(os.path.basename(file_path))[0]
+        json_columns = parquet_table_schema_to_json_columns(file_path, arrow_schema, num_rows)
+        catalog['tables'][table_name] = json_columns
+
+    return catalog
 
 def main():
     parser = argparse.ArgumentParser(description="Process parquet input files and output a lingo database.")
@@ -89,8 +146,29 @@ def main():
     parser.add_argument("--output", type=str, required=False, help="Path to the output database directory name.")
 
     args = parser.parse_args()
-    (table_schema,rows) = parquet_schema(args.input)
-    parquet_table_schema_to_json_columns(table_schema, "test", rows, "device_sk")
+    input = args.input
+    output = args.output
+
+    files = get_parquet_files(input)
+    catalog = generate_lingo_catalog(files)
+    
+    progress_bar = tqdm(total=len(files), desc="Parquet -> Arrow ")
+
+    for file in files:
+        lingofy(file, output)
+        progress_bar.update(1)
+
+    progress_bar.close()
+    if output is None:
+        output = "lingodb"
+    
+    output_catalog_file = os.path.join(output, "metadata.json")
+    
+    with open(output_catalog_file, 'w') as f:
+        json.dump(catalog, f, indent=2)
+
+    #(table_schema,rows) = parquet_schema(files[0])
+    #parquet_table_schema_to_json_columns(files[0], table_schema, "test", rows)
     #lingofy(args.input, args.output)
 
 if __name__ == "__main__":
