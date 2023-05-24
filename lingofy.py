@@ -167,9 +167,5 @@ def main():
     with open(output_catalog_file, 'w') as f:
         json.dump(catalog, f, indent=2)
 
-    #(table_schema,rows) = parquet_schema(files[0])
-    #parquet_table_schema_to_json_columns(files[0], table_schema, "test", rows)
-    #lingofy(args.input, args.output)
-
 if __name__ == "__main__":
     main()
